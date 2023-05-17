@@ -14,7 +14,7 @@ var mrz = ""
 var temp_mrz = ""
 
 extension String {
-    func checkMrz() -> (String)? {
+    func checkMrz(callback: (Int) -> Void) -> (String)? {
         
         let tdOneFirstRegex = "(I|C|A).[A-Z0<]{3}[A-Z0-9]{1,9}<?[0-9O]{1}[A-Z0-9<]{14,22}"
         let tdOneSecondRegex = "[0-9O]{7}(M|F|<)[0-9O]{7}[A-Z0<]{3}[A-Z0-9<]{11}[0-9O]"
@@ -48,15 +48,23 @@ extension String {
             }
         }
         
+        // Passports
+        
         if tdThreeFirstLine != nil {
             if self.count == 44 {
                 captureFirst = self
+                callback(0)
+                print("LINE ONE")
+                return captureFirst
             }
         }
         
         if tdThreeSeconddLine != nil {
             if self.count == 44 {
                 captureSecond = self
+                callback(1)
+                print("LINE TWO")
+                return captureSecond
             }
         }
         
