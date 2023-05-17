@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "mrzparser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/appintheair/MRZParser.git",
+      "state" : {
+        "branch" : "develop",
+        "revision" : "64b73fae8092b31d0a378f0d000c244470c7ac44"
+      }
+    }
+  ],
+  "version" : 2
+}
