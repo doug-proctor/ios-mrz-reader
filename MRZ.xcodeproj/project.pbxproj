@@ -12,7 +12,9 @@
 		9A32F8EA2A141DA6001F159C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A32F8E92A141DA6001F159C /* Assets.xcassets */; };
 		9A32F8ED2A141DA6001F159C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A32F8EC2A141DA6001F159C /* Preview Assets.xcassets */; };
 		9A32F8F42A141DED001F159C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A32F8F32A141DED001F159C /* ViewController.swift */; };
-		9AA79E552A14382F00B5E14C /* StringUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AA79E542A14382F00B5E14C /* StringUtils.swift */; };
+		9A6D5E152A196CC700BCF3CD /* MRZExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D5E142A196CC700BCF3CD /* MRZExtractor.swift */; };
+		9A6D5E192A1BFCC700BCF3CD /* PassportOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D5E182A1BFCC700BCF3CD /* PassportOverlay.swift */; };
+		9A6D5E1B2A1C04D800BCF3CD /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D5E1A2A1C04D800BCF3CD /* AppModel.swift */; };
 		9AA79E582A15163400B5E14C /* MRZParser in Frameworks */ = {isa = PBXBuildFile; productRef = 9AA79E572A15163400B5E14C /* MRZParser */; };
 /* End PBXBuildFile section */
 
@@ -24,7 +26,9 @@
 		9A32F8EC2A141DA6001F159C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		9A32F8F32A141DED001F159C /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		9A32F8F52A142CC6001F159C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		9AA79E542A14382F00B5E14C /* StringUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringUtils.swift; sourceTree = "<group>"; };
+		9A6D5E142A196CC700BCF3CD /* MRZExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MRZExtractor.swift; sourceTree = "<group>"; };
+		9A6D5E182A1BFCC700BCF3CD /* PassportOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassportOverlay.swift; sourceTree = "<group>"; };
+		9A6D5E1A2A1C04D800BCF3CD /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +66,9 @@
 				9A32F8E52A141DA4001F159C /* MRZApp.swift */,
 				9A32F8E72A141DA4001F159C /* ContentView.swift */,
 				9A32F8F32A141DED001F159C /* ViewController.swift */,
-				9AA79E542A14382F00B5E14C /* StringUtils.swift */,
+				9A6D5E182A1BFCC700BCF3CD /* PassportOverlay.swift */,
+				9A6D5E1A2A1C04D800BCF3CD /* AppModel.swift */,
+				9A6D5E142A196CC700BCF3CD /* MRZExtractor.swift */,
 				9A32F8E92A141DA6001F159C /* Assets.xcassets */,
 				9A32F8EB2A141DA6001F159C /* Preview Content */,
 			);
@@ -153,10 +159,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9AA79E552A14382F00B5E14C /* StringUtils.swift in Sources */,
 				9A32F8F42A141DED001F159C /* ViewController.swift in Sources */,
+				9A6D5E1B2A1C04D800BCF3CD /* AppModel.swift in Sources */,
 				9A32F8E82A141DA4001F159C /* ContentView.swift in Sources */,
 				9A32F8E62A141DA4001F159C /* MRZApp.swift in Sources */,
+				9A6D5E152A196CC700BCF3CD /* MRZExtractor.swift in Sources */,
+				9A6D5E192A1BFCC700BCF3CD /* PassportOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -285,7 +293,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MRZ/Preview Content\"";
-				DEVELOPMENT_TEAM = C922FSK629;
+				DEVELOPMENT_TEAM = BWQZX9732Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MRZ/Info.plist;
@@ -319,7 +327,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MRZ/Preview Content\"";
-				DEVELOPMENT_TEAM = C922FSK629;
+				DEVELOPMENT_TEAM = BWQZX9732Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MRZ/Info.plist;

@@ -8,11 +8,50 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var appModel: AppModel
+    
     var body: some View {
-        VStack {
-            HostedViewController()
+        Group {
+            if appModel.step == .start {
+                ZStack {
+                    HostedViewController()
+                    PassportOverlay()
+                }
+                .edgesIgnoringSafeArea(.vertical)
+                .transition(AnyTransition.asymmetric(
+                    insertion: .move(edge: .trailing),
+                    removal: .move(edge: .leading))
+                )
+            }
+            if appModel.step == .end {
+                ZStack {
+                    Color.black
+                    VStack {
+                        if let image = appModel.image {
+                            Image(uiImage: UIImage(cgImage: image))
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 450, height: 450)
+                        }
+                        if let documentNumber = appModel.documentNumber {
+                            Text("Document number: \(documentNumber)").foregroundColor(.gray)
+                        }
+                        if let expiryDate = appModel.expiryDate {
+                            Text("Expiry date: \(expiryDate, format: Date.FormatStyle().year().month().day())").foregroundColor(.gray)
+                        }
+                        if let birthDate = appModel.birthDate {
+                            Text("Date of birth: \(birthDate, format: Date.FormatStyle().year().month().day())").foregroundColor(.gray)
+                        }
+                    }
+                }
+                .edgesIgnoringSafeArea(.vertical)
+                .transition(AnyTransition.asymmetric(
+                    insertion: .move(edge: .trailing),
+                    removal: .move(edge: .leading))
+                )
+            }
         }
-        .edgesIgnoringSafeArea(.vertical)
+        .animation(.default, value: appModel.step)
     }
 }
 

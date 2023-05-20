@@ -12,6 +12,7 @@ struct MRZApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(AppModel())
         }
     }
 }
