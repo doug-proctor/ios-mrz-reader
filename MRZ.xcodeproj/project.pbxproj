@@ -16,7 +16,6 @@
 		9A6D5E152A196CC700BCF3CD /* MRZExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D5E142A196CC700BCF3CD /* MRZExtractor.swift */; };
 		9A6D5E192A1BFCC700BCF3CD /* PassportOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D5E182A1BFCC700BCF3CD /* PassportOverlay.swift */; };
 		9A6D5E1B2A1C04D800BCF3CD /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D5E1A2A1C04D800BCF3CD /* AppModel.swift */; };
-		9AA79E582A15163400B5E14C /* MRZParser in Frameworks */ = {isa = PBXBuildFile; productRef = 9AA79E572A15163400B5E14C /* MRZParser */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,7 +37,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9AA79E582A15163400B5E14C /* MRZParser in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,7 +101,6 @@
 			);
 			name = MRZ;
 			packageProductDependencies = (
-				9AA79E572A15163400B5E14C /* MRZParser */,
 			);
 			productName = MRZ;
 			productReference = 9A32F8E22A141DA4001F159C /* MRZ.app */;
@@ -134,7 +131,6 @@
 			);
 			mainGroup = 9A32F8D92A141DA4001F159C;
 			packageReferences = (
-				9AA79E562A15163400B5E14C /* XCRemoteSwiftPackageReference "MRZParser" */,
 			);
 			productRefGroup = 9A32F8E32A141DA4001F159C /* Products */;
 			projectDirPath = "";
@@ -379,25 +375,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		9AA79E562A15163400B5E14C /* XCRemoteSwiftPackageReference "MRZParser" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/appintheair/MRZParser.git";
-			requirement = {
-				branch = develop;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		9AA79E572A15163400B5E14C /* MRZParser */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 9AA79E562A15163400B5E14C /* XCRemoteSwiftPackageReference "MRZParser" */;
-			productName = MRZParser;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9A32F8DA2A141DA4001F159C /* Project object */;
 }
