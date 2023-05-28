@@ -17,8 +17,7 @@ final class AppModel: ObservableObject {
     @Published var step = Step.start
 
     @Published var documentNumber: String?
-    @Published var expiryDate: Date?
-    @Published var birthDate: Date?
-
+    @Published var expiryDate: String?
+    @Published var birthDate: String?
     @Published var image: CGImage?
 }

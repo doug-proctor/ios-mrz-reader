@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9A124B832A1D559B0086F0FE /* OverlayModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A124B822A1D559B0086F0FE /* OverlayModel.swift */; };
 		9A32F8E62A141DA4001F159C /* MRZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A32F8E52A141DA4001F159C /* MRZApp.swift */; };
 		9A32F8E82A141DA4001F159C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A32F8E72A141DA4001F159C /* ContentView.swift */; };
 		9A32F8EA2A141DA6001F159C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9A32F8E92A141DA6001F159C /* Assets.xcassets */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		9A124B822A1D559B0086F0FE /* OverlayModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayModel.swift; sourceTree = "<group>"; };
 		9A32F8E22A141DA4001F159C /* MRZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MRZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A32F8E52A141DA4001F159C /* MRZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MRZApp.swift; sourceTree = "<group>"; };
 		9A32F8E72A141DA4001F159C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 				9A32F8F32A141DED001F159C /* ViewController.swift */,
 				9A6D5E182A1BFCC700BCF3CD /* PassportOverlay.swift */,
 				9A6D5E1A2A1C04D800BCF3CD /* AppModel.swift */,
+				9A124B822A1D559B0086F0FE /* OverlayModel.swift */,
 				9A6D5E142A196CC700BCF3CD /* MRZExtractor.swift */,
 				9A32F8E92A141DA6001F159C /* Assets.xcassets */,
 				9A32F8EB2A141DA6001F159C /* Preview Content */,
@@ -164,6 +167,7 @@
 				9A32F8E82A141DA4001F159C /* ContentView.swift in Sources */,
 				9A32F8E62A141DA4001F159C /* MRZApp.swift in Sources */,
 				9A6D5E152A196CC700BCF3CD /* MRZExtractor.swift in Sources */,
+				9A124B832A1D559B0086F0FE /* OverlayModel.swift in Sources */,
 				9A6D5E192A1BFCC700BCF3CD /* PassportOverlay.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

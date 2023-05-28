@@ -24,10 +24,15 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     private var avVideoOutput = AVCaptureVideoDataOutput()
     private var sampleBuffer: CMSampleBuffer! = nil
     private var shouldPerformTextRecognition = true
-    private var detectionLayer: CALayer! = nil
     private var photoLayer: CALayer! = nil
     private var extractor = MRZExtractor(mrzType: .td3)
     private let generator = UINotificationFeedbackGenerator()
+    
+    // Logging & debug etc
+    private var endlessMode = false
+    private var successCount = 0
+    private var visionStartTime: TimeInterval! = nil
+    private var scanStartTime: TimeInterval! = nil
     
     init(appModel: AppModel) {
         self.appModel = appModel
@@ -62,47 +67,70 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         guard let observations = request?.results as? [VNRecognizedTextObservation] else {
             return
         }
-        
-        self.detectionLayer.sublayers = nil
                     
-        if let reading = extractor.extract(observations: observations), let fields = reading.fields {
-            avCaptureSession.stopRunning()
+        if let fields = extractor.extract(observations: observations) {
+            // Model timer
+            let visionEndTime = (Date().timeIntervalSince1970 * 1000).rounded()
+            let visionDuration = visionEndTime - visionStartTime
+            print("Vision duration: ", visionDuration)
             
-            print("\(fields.documentNumber == "518931376" ? "✅" : "❌") Document number: \(fields.documentNumber!)")
-            print("\(fields.countryCode == "GBR" ? "✅" : "❌") Country code: \(fields.countryCode)")
-            print("\(fields.expiryDate!.description == "2025-07-06 00:00:00 +0000" ? "✅" : "❌") Expiry date: \(fields.expiryDate!)")
-            print("\(fields.birthdate!.description == "1983-10-21 00:00:00 +0000" ? "✅" : "❌") Birth date: \(fields.birthdate!)")
-            print("\(fields.surnames == "PROCTOR" ? "✅" : "❌") Surnames: \(fields.surnames)")
-            print("\(fields.givenNames == "DOUGLAS JOHN BEAUCHAMP" ? "✅" : "❌") Given names: \(fields.givenNames)")
-            print("\(fields.sex == .male ? "✅" : "❌") Sex: \(fields.sex)")
-            print("\(fields.documentType == .passport ? "✅" : "❌") Doc type: \(fields.documentType)")
-            print("\(fields.nationalityCountryCode == "GBR" ? "✅" : "❌") Nationality: \(fields.nationalityCountryCode)")            
+            // Scan timer
+            let scanEndTime = (Date().timeIntervalSince1970 * 1000).rounded()
+            var scanDuration: Double = 0.0
+            if scanStartTime != nil {
+                scanDuration = scanEndTime - scanStartTime
+                scanStartTime = nil
+            }
             
-            DispatchQueue.main.async {
-                // Buzzzzz
-                self.generator.notificationOccurred(.success)
-                
-                // Present the captured document photo
-                let image = self.sampleBuffer.cgImage()
-                self.photoLayer.contents = image
-                
-                // Update the app model
-                self.appModel.isScanComplete = true
-                self.appModel.image = image
-                self.appModel.documentNumber = fields.documentNumber
-                self.appModel.expiryDate = fields.expiryDate
-                self.appModel.birthDate = fields.birthdate
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(600)) {
-                    self.appModel.step = .end
+            // Success count
+            successCount += 1
+            print("Success count: ", successCount)
+            
+            if !endlessMode {
+                avCaptureSession.stopRunning()
+            }
+            
+            print("\(fields["documentNumber"] == "518931376" ? "✅" : "❌") Document number: \(fields["documentNumber"]!)")
+            print("\(fields["expiryDate"] == "250706" ? "✅" : "❌") Expiry date: \(fields["expiryDate"]!)")
+            print("\(fields["birthDate"] == "831021" ? "✅" : "❌") Birth date: \(fields["birthDate"]!)")
+            
+            DispatchQueue.global(qos: .userInitiated).async {
+                log(scanDuration: scanDuration, visionDuration: visionDuration, documentNumber: fields["documentNumber"]!, expiryDate: fields["expiryDate"]!, birthDate: fields["birthDate"]!)
+            }
+            
+            if endlessMode {
+                self.shouldPerformTextRecognition = true
+            }
+            
+            if !endlessMode {
+                DispatchQueue.main.async {
+                    // Buzzzzz
+                    self.generator.notificationOccurred(.success)
+                    
+                    // Present the captured document photo
+                    let image = self.sampleBuffer.cgImage()
+                    self.photoLayer.contents = image
+                    
+                    // Update the app model
+                    self.appModel.isScanComplete = true
+                    self.appModel.image = image
+                    
+                    if let documentNumber = fields["documentNumber"], let expiryDate = fields["expiryDate"], let birthDate = fields["birthDate"] {
+                        self.appModel.documentNumber = documentNumber
+                        self.appModel.expiryDate = expiryDate
+                        self.appModel.birthDate = birthDate
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(1000)) {
+                        self.appModel.step = .end
+                    }
                 }
-
-                // Draw a box around the MRZ
-//                let boxLayer = self.drawBoundingBox(self.screenRectFromNormalisedRect(rect: reading.boundingBox))
-//                self.detectionLayer.addSublayer(boxLayer)
             }
         } else {
             self.shouldPerformTextRecognition = true
+            
+            // Overall scan timer
+            scanStartTime = scanStartTime == nil ? (Date().timeIntervalSince1970 * 1000).rounded() : nil
         }
     }
     
@@ -171,6 +199,10 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         textRecognitionRequestQueue.async {
             do {
                 self.shouldPerformTextRecognition = false
+                
+                // Vision request / model timer
+                self.visionStartTime = (Date().timeIntervalSince1970 * 1000).rounded()
+                                
                 try imageRequestHandler.perform([textRecognitionRequest])
             } catch let error as NSError {
                 print("Failed to perform image request: \(error)")
@@ -226,15 +258,10 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         photoLayer = CALayer()
         photoLayer.frame = rect
         
-        // And a drawing layer...
-        detectionLayer = CALayer()
-        detectionLayer.frame = screenRect
-        
         // Then present the layers
         DispatchQueue.main.async { [weak self] in
             self!.view.layer.addSublayer(avPreviewLayer)
             self!.view.layer.addSublayer(self!.photoLayer)
-            self!.view.layer.addSublayer(self!.detectionLayer)
         }
         
         // Calculate the region of interest
@@ -319,30 +346,55 @@ extension CMSampleBuffer {
     }
 }
 
-extension CATransaction {
-    // https://stackoverflow.com/questions/5833488/how-to-disable-calayer-implicit-animations
-    static func disableAnimations(_ completion: () -> Void) {
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        completion()
-        CATransaction.commit()
+func log(scanDuration: Double, visionDuration: Double, documentNumber: String, expiryDate: String, birthDate: String) {
+    let configuration = URLSessionConfiguration.default
+    configuration.timeoutIntervalForRequest = 120
+    configuration.timeoutIntervalForResource = 120
+    let session = URLSession(configuration: configuration)
+    
+    let url = URL(string: "https://mrzlog.dougproctor.co.uk/log")!
+    
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.addValue("application/json", forHTTPHeaderField: "Accept")
+    
+    let parameters: [String: Any] = [
+        "vision_duration": visionDuration,
+        "scan_duration": scanDuration,
+        "document_number": documentNumber,
+        "expiry_date": expiryDate,
+        "birth_date": birthDate
+    ]
+        
+    do {
+        request.httpBody = try JSONSerialization.data(withJSONObject: parameters, options: .prettyPrinted)
+    } catch let error {
+        print("Error", error.localizedDescription)
     }
+    
+    let task = session.dataTask(with: request as URLRequest, completionHandler: { data, response, error in
+        if error != nil || data == nil {
+            print("Client error!")
+            return
+        }
+        
+        guard let response = response as? HTTPURLResponse, (200...299).contains(response.statusCode) else {
+            print("Oops!! there is server error!")
+            return
+        }
+        
+        guard let mime = response.mimeType, mime == "application/json" else {
+            print("response is not json")
+            return
+        }
+        
+        do {
+            let json = try JSONSerialization.jsonObject(with: data!, options: [])
+        } catch {
+            print("JSON error: \(error.localizedDescription)")
+        }
+    })
+    
+    task.resume()
 }
-
-//extension CGImage {
-//    func resize(size:CGSize) -> CGImage? {
-//        let width: Int = Int(size.width)
-//        let height: Int = Int(size.height)
-//
-//        let bytesPerPixel = self.bitsPerPixel / self.bitsPerComponent
-//        let destBytesPerRow = width * bytesPerPixel
-//
-//        guard let colorSpace = self.colorSpace else { return nil }
-//        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: self.bitsPerComponent, bytesPerRow: destBytesPerRow, space: colorSpace, bitmapInfo: self.alphaInfo.rawValue) else { return nil }
-//
-//        context.interpolationQuality = .high
-//        context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
-//
-//        return context.makeImage()
-//    }
-//}

@@ -14,8 +14,10 @@ struct ContentView: View {
         Group {
             if appModel.step == .start {
                 ZStack {
+                    Color.blue
                     HostedViewController()
                     PassportOverlay()
+//                        .padding(.bottom, 100) // to account for the help sheet
                 }
                 .edgesIgnoringSafeArea(.vertical)
                 .transition(AnyTransition.asymmetric(
@@ -37,10 +39,14 @@ struct ContentView: View {
                             Text("Document number: \(documentNumber)").foregroundColor(.gray)
                         }
                         if let expiryDate = appModel.expiryDate {
-                            Text("Expiry date: \(expiryDate, format: Date.FormatStyle().year().month().day())").foregroundColor(.gray)
+                            Text("Expiry date: \(expiryDate)").foregroundColor(.gray)
                         }
                         if let birthDate = appModel.birthDate {
-                            Text("Date of birth: \(birthDate, format: Date.FormatStyle().year().month().day())").foregroundColor(.gray)
+                            Text("Date of birth: \(birthDate)").foregroundColor(.gray)
+                        }
+                        Button("Restart") {
+                            appModel.step = .start
+                            appModel.isScanComplete = false
                         }
                     }
                 }
@@ -58,5 +64,16 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+            .environmentObject(AppModel())
+            .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
+            .previewDisplayName("iPhone SE")
+        ContentView()
+            .environmentObject(AppModel())
+            .previewDevice(PreviewDevice(rawValue: "iPhone 14"))
+            .previewDisplayName("iPhone 14")
+        ContentView()
+            .environmentObject(AppModel())
+            .previewDevice(PreviewDevice(rawValue: "iPhone 14 Pro Max"))
+            .previewDisplayName("iPhone 14 Pro Max")
     }
 }

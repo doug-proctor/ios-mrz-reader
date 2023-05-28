@@ -58,3 +58,8 @@ fastlane/screenshots
 #
 # *.cert
 # *.mobileprovision
+
+# Doug added:
+
+*.xcodeproj/xcuserdata
+*.xcodeproj/xcshareddata
