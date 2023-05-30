@@ -10,8 +10,6 @@ import SwiftUI
 import AVFoundation
 import Vision
 
-import MRZParser
-
 class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate {
     private var appModel: AppModel
     private var screenRect: CGRect! = nil
@@ -27,6 +25,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     private var photoLayer: CALayer! = nil
     private var extractor = MRZExtractor(mrzType: .td3)
     private let generator = UINotificationFeedbackGenerator()
+    private var videoDimensions: CMVideoDimensions! = nil
+    private var videoAspectRatio: CGFloat! = nil
+    private var videoWidth: CGFloat! = nil
+    private var videoBleed: CGFloat! = nil
+    private var videoScreenWidthRatio: CGFloat! = nil
     
     // Logging & debug etc
     private var endlessMode = false
@@ -90,9 +93,7 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
                 avCaptureSession.stopRunning()
             }
             
-            print("\(fields["documentNumber"] == "518931376" ? "✅" : "❌") Document number: \(fields["documentNumber"]!)")
-            print("\(fields["expiryDate"] == "250706" ? "✅" : "❌") Expiry date: \(fields["expiryDate"]!)")
-            print("\(fields["birthDate"] == "831021" ? "✅" : "❌") Birth date: \(fields["birthDate"]!)")
+            print("\(fields["documentNumber"]!), \(fields["expiryDate"]!), \(fields["birthDate"]!)")
             
             DispatchQueue.global(qos: .userInitiated).async {
                 log(scanDuration: scanDuration, visionDuration: visionDuration, documentNumber: fields["documentNumber"]!, expiryDate: fields["expiryDate"]!, birthDate: fields["birthDate"]!)
@@ -104,17 +105,20 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             
             if !endlessMode {
                 DispatchQueue.main.async {
+                    self.appModel.isScanComplete = true
+                    
                     // Buzzzzz
                     self.generator.notificationOccurred(.success)
                     
-                    // Present the captured document photo
+                    // Present the image obtained from the last buffer
                     let image = self.sampleBuffer.cgImage()
                     self.photoLayer.contents = image
                     
-                    // Update the app model
-                    self.appModel.isScanComplete = true
-                    self.appModel.image = image
+                    // Store the cropped image
+                    let croppedImage = image?.cropping(to: self.getCropRect())
+                    self.appModel.image = croppedImage
                     
+                    // Store the document details
                     if let documentNumber = fields["documentNumber"], let expiryDate = fields["expiryDate"], let birthDate = fields["birthDate"] {
                         self.appModel.documentNumber = documentNumber
                         self.appModel.expiryDate = expiryDate
@@ -135,52 +139,49 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
     }
     
     
-    // MARK: - Drawing
+    // MARK: - Coordinates
     
     func normalisedFlippedRectFromScreenRect(rect: CGRect) -> CGRect {
         var adjustedRect = rect
-        adjustedRect.size.width /= 1.219
-        adjustedRect.origin.x += 35 // wtf does this number come from???
+
+        // Adjust for aspeect ratio difference between the screen and the video
+        adjustedRect.size.width /= self.videoScreenWidthRatio
+        adjustedRect.origin.x += (self.videoBleed / 2) / self.videoScreenWidthRatio
 
         var normalisedRect = VNNormalizedRectForImageRect(adjustedRect, Int(screenRect.width), Int(screenRect.height))
+        
+        // Flip along the y-axis
         normalisedRect.origin.y = 1 - normalisedRect.size.height - normalisedRect.origin.y
         
         return normalisedRect
     }
     
-    func flippedAdjustedScreenRectFromNormalisedRect(rect: CGRect) -> CGRect {
-        let sideBleed = 43.0
-        let cropFactor = 1.219
-
-        var rect = VNImageRectForNormalizedRect(rect, Int(self.screenRect.size.width * cropFactor), Int(self.screenRect.size.height))
+    
+    // MARK: - Cropping
+    
+    func getCropRect() -> CGRect {
         
-        // Adjust for the video bleed
-        rect.origin.x -= sideBleed
+        // Add padding to the top of the crop zone to ensure we always have the top of the doc in frame
+        let verticalPadding = self.roiRect.size.height * 2
         
-        // Invert the y-axis
-        rect.origin.y = self.screenRect.size.height - rect.origin.y - rect.height
+        // Get overlay height as a proportion of screen height
+        let overlayHeightProportion = overlayHeight / self.screenRect.height //  (should be video height instead of screenRect height, but we know they are the same
+        let overlayWidthProportion = overlayWidth / self.screenRect.width
         
-        // Add padding
-        let padding = 10.0
-        rect.size.width += padding * 2
-        rect.size.height += padding * 2
-        rect.origin.x -= padding
-        rect.origin.y -= padding
+        // Get overlay's projected height in the video frame
+        let overlayProjectedHeight = (overlayHeightProportion * CGFloat(self.videoDimensions.width) + verticalPadding) // use width because the AR is landscape
+        let overlayProjectedWidth = overlayWidthProportion * CGFloat(self.videoDimensions.height) // use height because the AR is landscape
         
-        return rect
-    }
-
-    func drawBoundingBox(_ bounds: CGRect) -> CALayer {
-        let boxLayer = CALayer()
-        boxLayer.frame = bounds
-        boxLayer.borderWidth = 5.0
-        boxLayer.borderColor = CGColor.init(red: 0, green: 1, blue: 0, alpha: 1)
-        boxLayer.cornerRadius = 4
-        return boxLayer
+        // Get overlay's y-offset
+        let overlayProjectedY = ((CGFloat(self.videoDimensions.width) - overlayProjectedHeight) / 2)
+        let overlayProjectedX = (CGFloat(self.videoDimensions.height) - overlayProjectedWidth) / 2
+        
+        // Crop the image
+        return CGRect(x: overlayProjectedX, y: overlayProjectedY, width: overlayProjectedWidth, height: overlayProjectedHeight)
     }
     
     
-    // MARK: - AV & Vision setup
+    // MARK: - Vision setup
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         if !shouldPerformTextRecognition { return }
@@ -212,8 +213,11 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
     
+    
+    // MARK: - AV setup
+    
     func setupCaptureSession() {
-        guard let videoDevice = AVCaptureDevice.default(.builtInDualCamera,for: .video, position: .back) else {
+        guard let videoDevice = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) else {
             return
         }
         
@@ -236,10 +240,16 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
             return
         }
 
-        avCaptureSession.sessionPreset = .high
+        avCaptureSession.sessionPreset = .high //  .high gives 1920x1080 on iPhone 14 Pro, same as not setting this property at all
         avCaptureSession.addInput(videoDeviceInput)
         avCaptureSession.addOutput(avVideoOutput)
-
+        
+        self.videoDimensions = CMVideoFormatDescriptionGetDimensions(videoDevice.activeFormat.formatDescription)
+        self.videoAspectRatio = CGFloat(self.videoDimensions.height) / CGFloat(self.videoDimensions.width)
+        self.videoWidth = self.screenRect.height * self.videoAspectRatio
+        self.videoBleed = self.videoWidth - self.screenRect.width
+        self.videoScreenWidthRatio = self.videoWidth / self.screenRect.width
+        
         avVideoOutput.connection(with: .video)?.videoOrientation = .portrait
         avVideoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "avSampleBufferQueue")) // Put this on class so we can suspend it?
         
@@ -250,11 +260,9 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         avPreviewLayer.connection?.videoOrientation = .portrait
         
         // And a document photo layer...
-        let sideBleed = 43.0
-        let cropFactor = 1.219
         var rect = screenRect!
-        rect.origin.x -= sideBleed
-        rect.size.width *= cropFactor
+        rect.origin.x -= self.videoBleed / 2
+        rect.size.width *= self.videoScreenWidthRatio
         photoLayer = CALayer()
         photoLayer.frame = rect
         
@@ -265,17 +273,18 @@ class ViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDele
         }
         
         // Calculate the region of interest
-        let screenHeight = screenRect.size.height
-        let guideHeight = 260.0
-        let roiHeight = guideHeight * (1 - 0.74)
-        let roiY = screenHeight - roiHeight - (screenHeight - guideHeight) / 2
+        let roiHeight = overlayHeight * overlayMrzHeightProportion
+        let roiY = screenRect.size.height - roiHeight - (screenRect.size.height - overlayHeight) / 2
         
-        let screenWidth = screenRect.size.width
-        let guideWidth = 360.0
-        let roiWidth = guideWidth
-        let roiX = (screenWidth - guideWidth) / 2
+        let roiWidth = overlayWidth
+        let roiX = (screenRect.size.width - overlayWidth) / 2
         
         self.roiRect = CGRect(x: roiX, y: roiY, width: roiWidth, height: roiHeight)
+        
+        // Draw the roi
+//        let roiView = UIView(frame: self.roiRect)
+//        roiView.layer.backgroundColor = .init(red: 1, green: 0, blue: 0, alpha: 0.5)
+//        self.view.addSubview(roiView)
     }
     
     
@@ -317,6 +326,27 @@ struct HostedViewController: UIViewControllerRepresentable {
     }
 }
 
+
+// MARK: - Extensions
+
+extension CGImage {
+    func resize(size: CGSize) -> CGImage? {
+        let width: Int = Int(size.width)
+        let height: Int = Int(size.height)
+        
+        let bytesPerPixel = self.bitsPerPixel / self.bitsPerComponent
+        let destBytesPerRow = width * bytesPerPixel
+        
+        guard let colorSpace = self.colorSpace else { return nil }
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: self.bitsPerComponent, bytesPerRow: destBytesPerRow, space: colorSpace, bitmapInfo: self.alphaInfo.rawValue) else { return nil }
+        
+        context.interpolationQuality = .high
+        context.draw(self, in: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        return context.makeImage()
+    }
+}
+
 extension CMSampleBuffer {
     /// https://stackoverflow.com/questions/15726761/make-an-uiimage-from-a-cmsamplebuffer
     func uiImage(orientation: UIImage.Orientation = .up, scale: CGFloat = 1.0) -> UIImage? {
@@ -345,6 +375,9 @@ extension CMSampleBuffer {
         return nil
     }
 }
+
+
+// MARK: - Logger
 
 func log(scanDuration: Double, visionDuration: Double, documentNumber: String, expiryDate: String, birthDate: String) {
     let configuration = URLSessionConfiguration.default

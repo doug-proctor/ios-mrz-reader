@@ -14,7 +14,6 @@ struct ContentView: View {
         Group {
             if appModel.step == .start {
                 ZStack {
-                    Color.blue
                     HostedViewController()
                     PassportOverlay()
 //                        .padding(.bottom, 100) // to account for the help sheet

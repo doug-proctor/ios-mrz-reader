@@ -75,7 +75,7 @@ struct Chevron: Shape {
 struct MRZOutline: Shape {
     func path(in rect: CGRect) -> Path {
         let radius = 20.0
-        let prop = 0.74
+        let prop = 1 - overlayMrzHeightProportion
         return Path { path in
             path.move(to: CGPoint(x: rect.minX, y: rect.maxY * prop))
             path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY * prop))

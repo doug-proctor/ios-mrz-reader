@@ -16,6 +16,7 @@ enum MRZType {
 let td1Line1Regex = "(I|C|A).[A-Z0<]{3}[A-Z0-9]{1,9}<?[0-9O]{1}[A-Z0-9<]{14,22}"
 let td1Line2Regex = "[0-9O]{7}(M|F|<)[0-9O]{7}[A-Z0<]{3}[A-Z0-9<]{11}[0-9O]"
 let td1Line3Regex = "([A-Z<]{30})"
+let td1LineLength = 30
 
 // Regex for TD3 (passports)
 let td3Line1Regex = "(P[A-Z<])([A-Z]{3}|D<<)([A-Z<]{39})"
@@ -66,7 +67,9 @@ let values: [Character: Int] = [
 struct MRZReading {
     var isComplete = false
     var mrzType: MRZType
-    var line2String: String?
+    var td1line1String: String?
+    var td1line2String: String?
+    var td3line2String: String?
 }
 
 class MRZExtractor {
@@ -107,7 +110,11 @@ class MRZExtractor {
     }
     
     func parse() -> [String: String]? {
-        if let mrz = self.reading.line2String {
+        return self.mrzType == .td1 ? parseID() :  parsePassport()
+    }
+    
+    func parsePassport() -> [String: String]? {
+        if let mrz = self.reading.td3line2String {
             
             let fields = [
                 String(Array(mrz)[0...9]), // document number
@@ -146,6 +153,37 @@ class MRZExtractor {
         return nil
     }
     
+    func parseID() -> [String: String]? {
+        if let mrzLine1 = self.reading.td1line1String, let mrzLine2 = self.reading.td1line2String {
+            
+            let fields = [
+                String(Array(mrzLine1)[5...14]), // document number
+                String(Array(mrzLine2)[0...6]), // birth date
+                String(Array(mrzLine2)[8...14]), // expiry date
+            ]
+            
+            // Now check the individual fields
+            let namedFields = [
+                "documentNumber": fields[0],
+                "birthDate": fields[1],
+                "expiryDate": fields[2],
+            ]
+            var validatedFields = [String: String]()
+            
+            for (name, mrz) in namedFields {
+                if checkMrz(mrz: mrz) {
+                    validatedFields[name] = String(mrz.dropLast()).replacingOccurrences(of: "<", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+                } else {
+                    return nil
+                }
+            }
+            
+            return validatedFields
+        }
+        
+        return nil
+    }
+    
     func extract(observations: [VNRecognizedTextObservation]) -> [String: String]? {
         reset()
         
@@ -154,8 +192,20 @@ class MRZExtractor {
                 // Passports
                 if reading.mrzType == .td3 && candidate.string.count == td3LineLength {
                     if let _ = candidate.string.range(of: td3Line2Regex, options: .regularExpression, range: nil, locale: nil) {
-                        reading.line2String = candidate.string
+                        reading.td3line2String = candidate.string
                         print("TD3 line 2 match: ", candidate.string)
+                    }
+                }
+                
+                // ID cards
+                if reading.mrzType == .td1 && candidate.string.count == td1LineLength {
+                    if let _ = candidate.string.range(of: td1Line1Regex, options: .regularExpression, range: nil, locale: nil) {
+                        reading.td1line1String = candidate.string
+                        print("TD1 line 1 match: ", candidate.string)
+                    }
+                    if let _ = candidate.string.range(of: td1Line2Regex, options: .regularExpression, range: nil, locale: nil) {
+                        reading.td1line2String = candidate.string
+                        print("TD1 line 2 match: ", candidate.string)
                     }
                 }
             }

@@ -9,16 +9,9 @@ import Foundation
 import UIKit
 
 // MRZ overlay properties
-let overlayRatio: CGFloat = 0.7222
+let overlayAspectRatio: CGFloat = 0.7222
 let overlayGutter: CGFloat = 20
 let overlayWidth: CGFloat = UIScreen.main.bounds.width - overlayGutter * 2
-let overlayHeight: CGFloat = overlayWidth * overlayRatio
+let overlayHeight: CGFloat = overlayWidth * overlayAspectRatio
+let overlayMrzHeightProportion: CGFloat = 0.25 // 1/4 the height of the overlay
 let helpSheetMinimisedHeight: CGFloat = 100
-
-//final class OverlayModel: ObservableObject {
-//    @Published var ratio: CGFloat = 0.7222
-//    @Published var gutter: CGFloat
-//    @Published var width: CGFloat
-//    @Published var height: CGFloat?
-//    @Published var something: String
-//}
